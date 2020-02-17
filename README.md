@@ -1,4 +1,4 @@
-# Example of Alice skill
+# COVID-2019 statistics scrapper
 
 Alice skill is intended to provide statistical information about Novel Coronavirus (2019-nCoV). It is written in Python with micro web-framework Bottle.
 
