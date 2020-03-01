@@ -31,6 +31,7 @@ country_localizations = {
     'тайланд': 'thailand',
     'япония': 'japan',
     'корея': 'republic of korea',
+    'иран': 'iran',
     'тайвань': 'taiwan',
     'малайзия': 'malaysia',
     'вьетнам': 'vietnam',
@@ -83,7 +84,7 @@ def fetch_last_modified_response() -> Optional[datetime]:
 def resolve_web_virus_data() -> Optional[VirusData]:
     page = requests.get(url_ecdc)
     if page.status_code >= 400:
-        print('Error retrieving page')
+        print('Error retrieving page: ' + page.status_code)
         return None
 
     # Create a BeautifulSoup object
@@ -112,44 +113,43 @@ def resolve_web_virus_data() -> Optional[VirusData]:
                 stats_data = StatsData(Region[cols[0]], cols[1], cols[2], cols[3])
                 data_stats.append(stats_data)
                 print(stats_data)
-            elif cols[0].lower() == 'total':
-                total_stats_confirmed = parse_str_as_int(cols[2])
-                total_stats_cases = parse_str_as_int(cols[3])
+                total_stats_confirmed += int(cols[2])
+                total_stats_cases += int(cols[3])
 
-    pattern = re.compile(r'CET')  # find time by CET
-    so = soup(text=pattern)
-    # for elem in so:
-       # print(elem.parent)
+    date_obj = find_date_page(soup)
+    return VirusData(total_stats_confirmed, total_stats_cases, date_obj, data_stats)
 
-    if len(so) == 0:
-        return None
 
-    date_time_str = so[0]  # contains 1 February 13:00 CET
-    print(f"Date time str: {date_time_str}")
+def find_date_page(soup: BeautifulSoup) -> datetime:
+
+    result = soup.find("div", {"class": "ct__last-update"})
+    # Page last updated 27 Feb 2020
+    date_time_str = result.text
+    # print(f"Date time parse: {date_time_str}")
 
     datetime_match = re.findall(
-        r"(\d{1,2}\s(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{1,2}:\d{2})",
+        r"(\d{1,2}\s(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4})",
         date_time_str)
+
     if len(datetime_match) == 0:
         datetime_match = re.findall(
-            r"(\d{1,2}\s(?:January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}\s\d{1,2}:\d{2})",
+            r"(\d{1,2}\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4})",
             date_time_str)
 
+    date_now = datetime.now()
     for match in datetime_match:
         # print(f"Exact match: {match}")
         try:
             # 7 February 2020 8:00 #https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
-            date = datetime.strptime(match, '%d %B %Y %H:%M')
+            date = datetime.strptime(match, '%d %b %Y') #7 Feb 2020
         except ValueError:
-            date = datetime.strptime(match, '%d %B %H:%M')  # 7 February 2020
-            # raise ValueError("Incorrect data format, should be YYYY-MM-DD")
+            pass
 
-        now = datetime.now()
-        date = date.replace(year=now.year)  # add year
+        date = date.replace(year=date_now.year)  # add year
         print(f"Exact datetime: {date}")
-        return VirusData(total_stats_confirmed, total_stats_cases, date, data_stats)
+        return date
 
-    return None
+    return date_now
 
 
 def fetch_data() -> Optional[list]:

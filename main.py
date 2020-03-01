@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Module documentation goes here
-   and here
-   and ...
-"""
+"""Main module"""
 import json
 import logging
 import site

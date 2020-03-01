@@ -37,6 +37,8 @@ class Region(Enum):
     Asia = 2
     Europe = 3
     Oceania = 4
+    Africa = 5
+    Other = 6
 
 
 class StatsData(JsonSerializable):
